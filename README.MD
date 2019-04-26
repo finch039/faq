@@ -78,10 +78,10 @@
 
 ### 动态规划(Dynamic Programming) DP
 
+<details><summary>实现方式</summary>
+
 > 若要解一个给定的问题，我们需要先解其不同的部门（子问题），再根据子问题的解以得出原问题的解。
 > 确认原问题与子问题、动态规划状态、边界状态结值、状态转移方程等。
-
-<details><summary>实现方式</summary>
 
 - 阶梯步骤
   - 确认原问题和子问题
@@ -105,6 +105,7 @@
 </details>
 
 ### 深度优先搜索 DFS
+
 <details><summary>实现方式</summary>
 
 1. 首先将根节点放入队列中。
@@ -146,33 +147,33 @@
 
 ### 内存屏障-memory barrier
 
+<details><summary>解答</summary>
+
 > 主要用处保证内存数据和处理器数据和缓存数据一致性，因为当某个处理器上改变某个变量X时，
 > 那么其他处理器的X副本都必须失效，否则将会读取错误的值。大多数现代计算机为了提高性能而
 > 采用乱序执行，写操作之后读操作之前插入内存屏障。
 
-## Shell
+</details>
 
-- find
+### 网络-基本名词
 
-## netWork
-
-- 一些概念
+<details><summary>解答</summary>
 
 > MSS = MTU - sizeof(TCPHDR) - sizeof(IPHDR)
 > On receipt of the MSS option the calculation of the size of segmentthat 
 >can be sent is:
 > SndMaxSegSiz = MIN((MTU - sizeof(TCPHDR) - sizeof(IPHDR)), MSS)
+> ![网络延迟](z_images/faq.md/z_images-faq.md-2019-04-17-11-54-07.png)
 
-- 网络延迟
-![网络延迟](z_images/faq.md/z_images-faq.md-2019-04-17-11-54-07.png)
+</details>
 
-- 流量控制
+### 如何进行流量控制 //TODO
 
-- 拥塞控制
+### TCP如何进行拥塞控制 //TODO
 
-## golang
+### golang-package-下载proxy配置
 
-### package
+<details><summary>配置</summary>
 
 ```bash
 export http_proxy=http://XXX
@@ -180,13 +181,13 @@ export http_proxy=http://XXX
 export GOPROXY=https://goproxy.io
 ```
 
-### GC优化方式
+</details>
 
-## C++
+### GC优化方式 //TODO
 
-### 书单
+### C++推荐书单
 
-<details> 
+<details> <summary>书单</sumary>
 
 - C++ Primer
 - STL源码剖析
@@ -213,13 +214,25 @@ class A {};
 
 </details>
 
-- memory
+### 如何理解C++内存管理
+
+<details><summary>解答</summary>
 
 > [memory management](http://www.gotw.ca/gotw/009.htm)
 
-- 动态绑定，静态绑定
+</details>
+
+### 如何理解C++动态绑定，静态绑定
+
+<details><summary>解答</summary>
 
 > 静态绑定发生在编译期，动态绑定发生在运行期
+
+</details>
+
+### 如何理解虚基类
+
+<details><summary>解答</summary>
 
 - 虚基类
   - what
@@ -230,35 +243,51 @@ class A {};
   - 解决了
     - 继承二义性问题
 
-- O1, O2, O3
-  - O1
-    - 降低代码大小，可执行代码的运行速度
-  - O2
-    - 提高目标代码的运行速度
-  - O3
-    - 利用现代的CPU中的流水线，Cache等
-    - finline-functions      // 采用一些启发式算法对函数进行内联
-    - funswitch-loops        // 执行循环unswitch变换
-    - fpredictive-commoning  //
-    - fgcse-after-reload     //执行全局的共同子表达式消除
+</details>
 
-- construct
-  - [doc](https://docs.microsoft.com/en-us/cpp/cpp/move-constructors-and-move-assignment-operators-cpp?view=vs-2017)
+### gcc 中O1，O2，O3进行了什么优化
+
+<details><summary>解答</summary>
+
+- O1
+  - 降低代码大小，可执行代码的运行速度
+- O2
+  - 提高目标代码的运行速度
+- O3
+  - 利用现代的CPU中的流水线，Cache等
+  - finline-functions      // 采用一些启发式算法对函数进行内联
+  - funswitch-loops        // 执行循环unswitch变换
+  - fpredictive-commoning  //
+  - fgcse-after-reload     //执行全局的共同子表达式消除
+
+</details>
+
+### 如何理解C++中的移动构造和移动复制构造
+
+<details><summary>解答</summary>
+
+> [doc](https://docs.microsoft.com/en-us/cpp/cpp/move-constructors-and-move-assignment-operators-cpp?view=vs-2017)
 
 ```cpp
 class_name (class_name &&)
 ```
 
-- copy costruct
+- copy costructor
 
 ```cpp
 class_name (const class_name&)
 ```
 
-## std::forward
+</details>
+
+## 如何理解std::forward
+
+<details><summary>解答</summary>
 
 - 转发左值为左值或右值
 - 转发右值为右值，并禁止转发为左值
+
+</details>
 
 ```c++
 std::vector <std::pair<uint32_t, uint32_t>> data;
@@ -518,6 +547,7 @@ static inline size_t sdsavail(const sds s) {
     return sh->free;
 }
 ```
+</details>
 
 ### 复制
 
@@ -815,4 +845,47 @@ gcc -c hello.cpp -o hell.o
 
 </details>
 
-### 如何判断channel的空和满不用 -> 和 <-
+### 如何判断channel的空和满
+
+<details><summary>select</summary>
+
+```golang
+ch := make(chan int, 1)
+ch <- 1
+select {
+  case ch <- 2:
+  fmt.Println("channel is empty");
+  default:
+  fmt.Println("channel is full !");
+}
+```
+
+</details>
+
+### 高并发编程中 进程、线程、IO多路复用的优缺点 //TODO
+
+<details><summary>总结</summary>
+
+- 多线程
+  - 特点
+    - 独立的虚拟地址空间
+    - 控制流显示的使用某种技术，进行进程间通信
+    - 共享文件表,不共享用户地址空间，
+  - 使用
+    - fork 之后 已连接的描述符副本，文件表中的引用计数+1
+    - 子进程退出时，已经连接的文件描述符的副本将自动关闭
+  - 优势
+  - 劣势
+    - 多进程间共享数据比较困难，需要IPC，比较慢，开销高
+- IO多路复用-(I/O multiplexing)
+  - 特点
+    - 一个进程的上下文中显示的调用他们自己的逻辑流
+    - 所有的程序共享一个地址空间
+- 多线程
+  - 特点
+    - 线程是运行在一个单一进程上下文中的逻辑流，由内核进行调度
+    - 共享同一个虚拟地址空间
+  - 优势
+  - 劣势
+
+</details>
