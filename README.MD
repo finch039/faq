@@ -1,28 +1,12 @@
 # FAQ
 
-## cs-project
+## 细节
 
-- KV
-  - data
-    - memory
-      - cache
-    - g_idx
-    - permanent
-      - m_ops
-      - m_idx
-      - File
-    - ops_queue
-      - 主从同步
-  - 优化
-    - m_ops 丢失
-    - m_ops 占用内存过高
+### 如何进行code review
 
-## coding
-
-- code review
-  - 代码局部性
-  - 边界条件是否判断
-  - 资源使用鲁棒性提高经验
+- 代码局部性
+- 边界条件是否判断
+- 资源使用鲁棒性提高经验
 
 ### 各个语言的差别
 
