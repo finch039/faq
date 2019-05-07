@@ -781,9 +781,250 @@ void replicationCron(void) //主从复制的调度中心
 
 </details>
 
+<details><summary>Redis 写入 string如何实现，涉及到的数据结构有哪些</summary>
+
+```c
+
+//和redis各种数据对象绑定
+typedef struct redisObject {
+    unsigned type:4;
+    unsigned encoding:4;
+    unsigned lru:LRU_BITS; /* LRU time (relative to global lru_clock) or
+                            * LFU data (least significant 8 bits frequency
+                            * and most significant 16 bits access time). */
+    int refcount;
+    void *ptr;
+} robj;
+
+/* Redis database representation. There are multiple databases identified
+ * by integers from 0 (the default database) up to the max configured
+ * database. The database number is the 'id' field in the structure. */
+typedef struct redisDb {
+    dict *dict;                 /* The keyspace for this DB */
+    dict *expires;              /* Timeout of keys with a timeout set */
+    dict *blocking_keys;        /* Keys with clients waiting for data (BLPOP)*/
+    dict *ready_keys;           /* Blocked keys that received a PUSH */
+    dict *watched_keys;         /* WATCHED keys for MULTI/EXEC CAS */
+    int id;                     /* Database ID */
+    long long avg_ttl;          /* Average TTL, just for stats */
+    list *defrag_later;         /* List of key names to attempt to defrag one by one, gradually. */
+} redisDb;
+
+/* With multiplexing we need to take per-client state.
+ * Clients are taken in a linked list. */
+typedef struct client {
+} client;
+
+//t_string.c
+/* SET key value [NX] [XX] [EX <seconds>] [PX <milliseconds>] */
+//embstr, sds
+void setCommand(client *c){
+    int j;
+    robj *expire = NULL;
+    int unit = UNIT_SECONDS;
+    int flags = OBJ_SET_NO_FLAGS;
+
+    for (j = 3; j < c->argc; j++) {
+      if()
+      {
+      } else {
+        addReply(c,shared.syntaxerr);
+        return;
+      }
+    }
+    c->argv[2] = tryObjectEncoding(c->argv[2]);
+    setGenericCommand(c,flags,c->argv[1],c->argv[2],expire,unit,NULL,NULL);
+
+};
+void setGenericCommand(client *c, int flags, robj *key, robj *val, robj *expire, int unit, robj *ok_reply, robj *abort_reply) {
+  long long milliseconds = 0; /* initialized to avoid any harmness warning */
+
+  if (expire) {
+      if (getLongLongFromObjectOrReply(c, expire, &milliseconds, NULL) != C_OK)
+          return;
+      if (milliseconds <= 0) {
+          addReplyErrorFormat(c,"invalid expire time in %s",c->cmd->name);
+          return;
+      }
+      if (unit == UNIT_SECONDS) milliseconds *= 1000;
+  }
+
+  if ((flags & OBJ_SET_NX && lookupKeyWrite(c->db,key) != NULL) ||
+      (flags & OBJ_SET_XX && lookupKeyWrite(c->db,key) == NULL))
+  {
+      addReply(c, abort_reply ? abort_reply : shared.nullbulk);
+      return;
+  }
+  setKey(c->db,key,val);
+  server.dirty++;
+  if (expire) setExpire(c,c->db,key,mstime()+milliseconds);
+  notifyKeyspaceEvent(NOTIFY_STRING,"set",key,c->db->id);
+  if (expire) notifyKeyspaceEvent(NOTIFY_GENERIC,
+      "expire",key,c->db->id);
+  addReply(c, ok_reply ? ok_reply : shared.ok);
+}
+
+//db.c
+/* High level Set operation. This function can be used in order to set
+ * a key, whatever it was existing or not, to a new object.
+ *
+ * 1) The ref count of the value object is incremented.
+ * 2) clients WATCHing for the destination key notified.
+ * 3) The expire time of the key is reset (the key is made persistent).
+ *
+ * All the new keys in the database should be created via this interface. */
+void setKey(redisDb* db, robj* key, robj* val);
+{
+  db.addKey();
+}
+
+/* Add the key to the DB. It's up to the caller to increment the reference
+ * counter of the value if needed.
+ *
+ * The program is aborted if the key already exists. */
+void dbAdd(redisDb* db, robj* key, robj* val){
+  soltToKeyAdd(key);
+};
+
+
+void soltToKeyAdd(robj* key){
+  //0为Del
+  soltToKeyUpdateKey(key, 1);
+};
+
+/* Slot to Key API. This is used by Redis Cluster in order to obtain in
+ * a fast way a key that belongs to a specified hash slot. This is useful
+ * while rehashing the cluster and in other conditions when we need to
+ * understand if we have keys for a given hash slot. */
+void slotToKeyUpdateKey(robj* key, int add)
+{
+}
+
+//networking.c
+/* Add the object 'obj' string representation to the client output buffer. */
+void addReply(client* c, robj* obj){
+};
+
+
+//db.c 通过dict进行判断key是否存在 hashmap
+robj* lookupKeyWrite(redisDb* db, robj* key){ };
+```
+
+</details>
+
+<details><summary>Key的TTL是如何实现</summary></details>
+
+<details><summary>redis测试如何实现,涉及到的框架和数据结构</summary>
+
+//TODO
+
+</details>
+
+<details><summary>Redis启动过程</summary>
+
+
+```c
+//server.c
+int mian()
+{
+
+}
+```
+
+
+</details>
+
+<details><summary>redis网络层如何实现</summary>
+
+//TODO
+#### 问题
+
+- 连接管理
+- 消息处理、解析
+- 连接释放
+
+```c
+/* networking.c -- Networking and Client related operations */
+client *createClient(int fd);
+void closeTimedoutClients(void);
+void freeClient(client *c);
+void freeClientAsync(client *c);
+void resetClient(client *c);
+void sendReplyToClient(aeEventLoop *el, int fd, void *privdata, int mask);
+void *addDeferredMultiBulkLength(client *c);
+void setDeferredMultiBulkLength(client *c, void *node, long length);
+void processInputBuffer(client *c);
+void processInputBufferAndReplicate(client *c);
+void acceptHandler(aeEventLoop *el, int fd, void *privdata, int mask);
+void acceptTcpHandler(aeEventLoop *el, int fd, void *privdata, int mask);
+void acceptUnixHandler(aeEventLoop *el, int fd, void *privdata, int mask);
+void readQueryFromClient(aeEventLoop *el, int fd, void *privdata, int mask);
+void addReplyString(client *c, const char *s, size_t len);
+void AddReplyFromClient(client *c, client *src);
+void addReplyBulk(client *c, robj *obj);
+void addReplyBulkCString(client *c, const char *s);
+void addReplyBulkCBuffer(client *c, const void *p, size_t len);
+void addReplyBulkLongLong(client *c, long long ll);
+void addReply(client *c, robj *obj);
+void addReplySds(client *c, sds s);
+void addReplyBulkSds(client *c, sds s);
+void addReplyError(client *c, const char *err);
+void addReplyStatus(client *c, const char *status);
+void addReplyDouble(client *c, double d);
+void addReplyHumanLongDouble(client *c, long double d);
+void addReplyLongLong(client *c, long long ll);
+void addReplyMultiBulkLen(client *c, long length);
+void addReplyHelp(client *c, const char **help);
+void addReplySubcommandSyntaxError(client *c);
+void copyClientOutputBuffer(client *dst, client *src);
+size_t sdsZmallocSize(sds s);
+size_t getStringObjectSdsUsedMemory(robj *o);
+void freeClientReplyValue(void *o);
+void *dupClientReplyValue(void *o);
+void getClientsMaxBuffers(unsigned long *longest_output_list,
+                          unsigned long *biggest_input_buffer);
+char *getClientPeerId(client *client);
+sds catClientInfoString(sds s, client *client);
+sds getAllClientsInfoString(int type);
+void rewriteClientCommandVector(client *c, int argc, ...);
+void rewriteClientCommandArgument(client *c, int i, robj *newval);
+void replaceClientCommandVector(client *c, int argc, robj **argv);
+unsigned long getClientOutputBufferMemoryUsage(client *c);
+void freeClientsInAsyncFreeQueue(void);
+void asyncCloseClientOnOutputBufferLimitReached(client *c);
+int getClientType(client *c);
+int getClientTypeByName(char *name);
+char *getClientTypeName(int class);
+void flushSlavesOutputBuffers(void);
+void disconnectSlaves(void);
+int listenToPort(int port, int *fds, int *count);
+void pauseClients(mstime_t duration);
+int clientsArePaused(void);
+int processEventsWhileBlocked(void);
+int handleClientsWithPendingWrites(void);
+int clientHasPendingReplies(client *c);
+void unlinkClient(client *c);
+int writeToClient(int fd, client *c, int handler_installed);
+void linkClient(client *c);
+void protectClient(client *c);
+void unprotectClient(client *c);
+
+#ifdef __GNUC__
+void addReplyErrorFormat(client *c, const char *fmt, ...)
+    __attribute__((format(printf, 2, 3)));
+void addReplyStatusFormat(client *c, const char *fmt, ...)
+    __attribute__((format(printf, 2, 3)));
+#else
+void addReplyErrorFormat(client *c, const char *fmt, ...);
+void addReplyStatusFormat(client *c, const char *fmt, ...);
+#endif
+```
+
+</details>
+
 ## LevelDB
 
-<details><summary>LeveDB checkpoint如何实现，有什么作用</summary>
+<details><summary>LevelDB checkpoint如何实现，有什么作用</summary>
 
 - 从服务器载入RDB文件时，阻塞不处理命令
 
