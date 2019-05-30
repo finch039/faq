@@ -922,7 +922,6 @@ robj* lookupKeyWrite(redisDb* db, robj* key){ };
 
 <details><summary>Redis启动过程</summary>
 
-
 ```c
 //server.c
 int mian()
@@ -930,7 +929,6 @@ int mian()
 
 }
 ```
-
 
 </details>
 
@@ -1489,3 +1487,17 @@ select {
 </details>
 
 <details><summary></summary></details>
+
+## Linux
+
+<details><summary>如何快速分析当前系统哪些资源比较忙</summary>
+
+- network
+  - ifstat
+    - watch more /proc/net/dev
+    - watch ifocnfig
+
+- disk
+  - iostat
+
+</details>
