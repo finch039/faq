@@ -170,6 +170,25 @@ FIN：断开一个连接。
 
  </details>
 
+## linux
+
+<details><summary>IO瓶颈</summary>
+
+### iostat
+
+#### iowait
+> Amount of time the CPU has been waiting for I/O to complete. <br>
+> 也就是说，CPU可能拿出一部分时间来等待IO完成（iowait），但从磁盘的角度看，<br>
+> 磁盘的利用率已经满了（util%），这种情况下，CPU使用率可能不高，但是系统整体QPS已经上不去了，<br>
+> 如果加大流量，会导致单次IO耗时的继续增加（因为IO请求都堵在队列里了），从而影响系统整体的处理性能.
+
+```bash
+iostat -x 1
+agv-cpu
+io-wait超过30%时表示IO是瓶颈
+```
+<details>
+
 ## Unix编程
 
 <details><summary>Unix-常识</summary>
@@ -235,6 +254,14 @@ FIN：断开一个连接。
 - C++设计新思维 Modern C++ Design : Generic Programming and Design Patterns Applied
 - Exceptional C++ Style中文版
 
+</details>
+
+<details><summary>如何进行内存泄漏分析</summary>
+valgriand
+</details>
+
+<details><summary>如何看程序性能</summary>
+gprof
 </details>
 
 <details><summary>如何捕获各个线程间的异常</summary>
@@ -1052,68 +1079,13 @@ void addReplyStatusFormat(client *c, const char *fmt, ...);
 
 </details>
 
-<details><summary>LevelDB 典型的数据结构</summary>
+<details><summary>Levedb文件层级</summary>
 
-```go
-// fileStorage is a file-system backed storage.
-type fileStorage struct {
-	path     string
-	readOnly bool
-
-	mu      sync.Mutex
-	flock   fileLock
-	slock   *fileStorageLock
-	logw    *os.File
-	logSize int64
-	buf     []byte
-	// Opened file counter; if open < 0 means closed.
-	open int
-	day  int
-}
-
-// memStorage is a memory-backed storage.
-type memStorage struct {
-	mu    sync.Mutex
-	slock *memStorageLock
-	files map[uint64]*memFile
-	meta  FileDesc
-}
-
-//memDB
-// DB is an in-memory key/value database.
-//skiplist
-type DB struct {
-	cmp comparer.BasicComparer
-	rnd *rand.Rand
-
-	mu     sync.RWMutex
-	kvData []byte
-	// Node data:
-	// [0]         : KV offset
-	// [1]         : Key length
-	// [2]         : Value length
-	// [3]         : Height
-	// [3..height] : Next nodes
-	nodeData  []int
-	prevNode  [tMaxHeight]int
-	maxHeight int
-	n         int
-	kvSize    int
-}
-
-type dbIter struct {
-	util.BasicReleaser
-	p          *DB //MEMDB
-	slice      *util.Range
-	node       int
-	forward    bool
-	key, value []byte
-	err        error
-}
-
-//SSDB
-
-```
+> <br>Log: Max size of 4MB, then flushed into a set of Level 0 SST files
+<br>Level 0: Max of 4 SST files, then one file compressed into Level 1
+<br>Level 1: Max total size of 10MB, then one file compressed into Level 2
+<br>Level 2: Max total size of 100MB, then one file compressed into Level 3
+<br>Level 3+: Max total size of 10 x previous level, then one file compressed into next level
 
 </details>
 
@@ -1499,5 +1471,46 @@ select {
 
 - disk
   - iostat
+
+- sar
+  - sar -r
+
+</details>
+
+## protobuf
+
+<details><summary>proto3下消息号错误，解出来的内容是什么，如何判断</summary>
+  
+```c++
+boolRes = protoMsg.ParseFromArray(const void * data, int size);
+std::cout << protoMsg.ByteSize() << "\n"; //消息号错误如果不包含公共字段这个为0；
+```
+
+</details>
+
+<details><summary>进程阻塞的方法</summary>
+
+1. while(true)
+2. 条件变量
+
+</details>
+
+<details><summary>高性能后端编程如何实现</summary>
+//TODO
+
+## 多线程
+
+## IP多路复用
+
+</details>
+
+<details><summary>高性能网络库如何实现</summary>
+
+> 多线程处理方案,一个线程用来消费FD上的消息报，另外起线程来消费FD上的时间
+
+### 组成
+
+1. 消息收发处理 epoll,select
+2. 消息消费
 
 </details>
